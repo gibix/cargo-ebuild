@@ -58,7 +58,7 @@ pub fn run_cargo_ebuild(cli: Cli) -> result::Result<Ebuild, Error> {
         &None, // color
         false, // frozen
         false, // locked
-        &flags,
+        flags.as_ref(),
     )?;
 
     // Build up data about the package we are attempting to generate a recipe for
@@ -97,7 +97,12 @@ pub fn run_cargo_ebuild(cli: Cli) -> result::Result<Ebuild, Error> {
                 use cargo::sources::GitSource;
 
                 match GitSource::new(&src_id, &config) {
-                    Ok(git_src) => git_crates.push(git_src.url().to_string()),
+                    Ok(git_src) => {
+                        git_crates.push(format!("{} {}\n", git_src.url(),
+                        // not sure on how is the best way to encode this
+                        // a git_reference could be a tag, branch, or revision
+                        src_id.git_reference().unwrap().pretty_ref().unwrap()))
+                    }
                     Err(err) => error!(
                         "Not able to find git source for {} caused by {}",
                         pkg.name(),
@@ -118,6 +123,10 @@ pub fn run_cargo_ebuild(cli: Cli) -> result::Result<Ebuild, Error> {
     // sort the crates
     crates.sort();
 
+    if !git_crates.is_empty() {
+        info!("Found this git crates: {:?}", git_crates);
+    }
+
     // root package metadata
     let metadata = package.manifest().metadata();
 
@@ -127,23 +136,17 @@ pub fn run_cargo_ebuild(cli: Cli) -> result::Result<Ebuild, Error> {
             debug!("No package.description set in your Cargo.toml, using package.name");
             package.name().to_string()
         },
-        |s| s.trim().to_string(),
+        |s| s.to_string(),
     );
 
     // package homepage (or source code location)
-    let homepage = metadata
-        .homepage
-        .as_ref()
-        .map_or_else(
-            || {
-                debug!("No package.homepage set in your Cargo.toml, trying package.repository");
-                metadata.repository.as_ref().ok_or_else(|| {
-                    err_msg(format_err!("No package.repository set in your Cargo.toml"))
-                })
-            },
-            |s| Ok(s),
-        )?
-        .trim();
+    let homepage = metadata.homepage.as_ref().or_else(|| {
+        debug!("No package.homepage set in your Cargo.toml, trying package.repository");
+        metadata.repository.as_ref().or_else(|| {
+            debug!("No package.repository set in your Cargo.toml");
+            None
+        })
+    });
 
     // package version
     let version = package.manifest().version().to_string();
@@ -157,11 +160,12 @@ pub fn run_cargo_ebuild(cli: Cli) -> result::Result<Ebuild, Error> {
     // write the contents out
     Ok(Ebuild::new(
         &package.name().to_string(),
-        summary.trim(),
-        homepage.trim(),
+        &summary,
+        homepage,
         license.trim(),
-        &crates.join(""),
-        &version,
+        crates.join("").as_ref(),
+        git_crates.join("").as_ref(),
+        version.as_ref(),
         "cargo-ebuild",
         env!("CARGO_PKG_VERSION"),
         1900 + time::now().tm_year,

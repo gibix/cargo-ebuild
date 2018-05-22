@@ -8,6 +8,9 @@ EAPI=6
 CRATES="
 {crates}"
 
+CRATES_GIT="
+{crates_git}"
+
 inherit cargo
 
 DESCRIPTION="{description}"
