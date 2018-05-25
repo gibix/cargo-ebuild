@@ -15,11 +15,27 @@ extern crate quicli;
 extern crate human_panic;
 
 use cargo_ebuild::run_cargo_ebuild;
-use cargo_ebuild::Cli;
+use cargo_ebuild::Command;
 use failure::Error;
 use quicli::prelude::*;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
+
+#[derive(StructOpt, Debug)]
+pub struct Cli {
+    #[structopt(subcommand)] // the real cargo-ebuild commands
+    cmd: Option<Command>,
+
+    /// Prevent cargo-ebuild and cargo to use stdout
+    #[structopt(short = "q", long = "quiet")]
+    quiet: bool,
+
+    /// Verbose mode (-v, -vv, -vvv, -vvvv)
+    #[structopt(short = "v", long = "verbose", parse(from_occurrences))]
+    verbosity: u8,
+
+    path: Option<String>,
+}
 
 fn main() -> std::result::Result<(), Error> {
     let args = Cli::from_args();
@@ -41,11 +57,22 @@ fn main() -> std::result::Result<(), Error> {
         .try_init()?;
 
     // call the real cargo_ebuild
-    let ebuild = run_cargo_ebuild(args)?;
+    let ebuild = run_cargo_ebuild(args.cmd, args.verbosity, args.quiet)?;
     debug!("Generated ebuild {:#?}", ebuild);
 
-    // build up the ebuild path
-    let ebuild_path = PathBuf::from(format!("{}-{}.ebuild", ebuild.name(), ebuild.version()));
+    // set ebuild path
+    let path = PathBuf::from(args.path.unwrap_or_else(|| String::from(".")));
+
+    let ebuild_path;
+
+    if path.is_dir() {
+        ensure!(path.exists(), format_err!("No such file or directory"));
+        let ebuild_name = PathBuf::from(format!("{}-{}.ebuild", ebuild.name(), ebuild.version()));
+        ebuild_path = path.join(ebuild_name);
+    } else {
+        ebuild_path = path;
+    }
+
     debug!("Ebuild file: {:?}", ebuild_path);
 
     // Open the file where we'll write the ebuild

@@ -9,10 +9,10 @@ CRATES="
 aho-corasick-0.6.4
 ansi_term-0.11.0
 arrayvec-0.4.7
-assert_cli-0.6.0
+assert_cli-0.6.1
 atty-0.2.10
-backtrace-0.3.7
-backtrace-sys-0.1.16
+backtrace-0.3.8
+backtrace-sys-0.1.19
 bitflags-1.0.3
 cargo-0.27.0
 cc-1.0.15
@@ -64,7 +64,7 @@ kernel32-sys-0.2.2
 lazy_static-0.2.11
 lazy_static-1.0.0
 lazycell-0.6.0
-libc-0.2.40
+libc-0.2.41
 libgit2-sys-0.7.1
 libssh2-sys-0.2.7
 libz-sys-1.0.18
@@ -77,21 +77,23 @@ miow-0.3.1
 nodrop-0.1.12
 num-traits-0.2.4
 num_cpus-1.8.0
-openssl-0.10.7
+openssl-0.10.8
 openssl-probe-0.1.2
-openssl-sys-0.9.30
+openssl-sys-0.9.31
 os_type-2.0.0
 percent-encoding-1.0.1
 pkg-config-0.3.11
 proc-macro2-0.3.8
+proc-macro2-0.4.3
 quick-error-1.2.1
 quicli-0.2.0
 quote-0.3.15
 quote-0.5.2
+quote-0.6.2
 rand-0.4.2
 rayon-0.9.0
 rayon-core-1.4.0
-redox_syscall-0.1.37
+redox_syscall-0.1.38
 redox_termios-0.1.1
 regex-0.2.11
 regex-1.0.0
@@ -104,8 +106,8 @@ schannel-0.1.12
 scopeguard-0.3.3
 semver-0.9.0
 semver-parser-0.7.0
-serde-1.0.55
-serde_derive-1.0.55
+serde-1.0.59
+serde_derive-1.0.59
 serde_ignored-0.0.4
 serde_json-1.0.17
 shell-escape-0.1.4
@@ -114,7 +116,8 @@ strsim-0.7.0
 structopt-0.2.8
 structopt-derive-0.2.8
 syn-0.11.11
-syn-0.13.10
+syn-0.13.11
+syn-0.14.0
 synom-0.11.3
 synstructure-0.6.1
 tar-0.4.15
@@ -129,13 +132,13 @@ toml-0.4.6
 ucd-util-0.1.1
 unicode-bidi-0.3.4
 unicode-normalization-0.1.7
-unicode-width-0.1.4
+unicode-width-0.1.5
 unicode-xid-0.0.4
 unicode-xid-0.1.0
 unreachable-1.0.0
 url-1.7.0
 utf8-ranges-1.0.0
-uuid-0.6.3
+uuid-0.6.5
 vcpkg-0.2.3
 vec_map-0.8.1
 void-1.0.2
@@ -148,9 +151,13 @@ winapi-x86_64-pc-windows-gnu-0.4.0
 wincolor-0.1.6
 "
 
+CRATES_GIT="
+"
+
 inherit cargo
 
-DESCRIPTION="Generates an ebuild for a package using the in-tree eclasses."
+DESCRIPTION="Generates an ebuild for a package using the in-tree eclasses.
+"
 HOMEPAGE="https://github.com/cardoe/cargo-ebuild"
 SRC_URI="$(cargo_crate_uris ${CRATES})"
 RESTRICT="mirror"

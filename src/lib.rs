@@ -9,20 +9,6 @@ pub mod ebuild;
 
 use quicli::prelude::*;
 
-#[derive(StructOpt, Debug)]
-pub struct Cli {
-    #[structopt(subcommand)] // the real cargo-ebuild commands
-    pub cmd: Command,
-
-    /// Prevent cargo-ebuild and cargo to use stdout
-    #[structopt(short = "q", long = "quiet")]
-    pub quiet: bool,
-
-    /// Verbose mode (-v, -vv, -vvv, -vvvv)
-    #[structopt(short = "v", long = "verbose", parse(from_occurrences))]
-    pub verbosity: u8,
-}
-
 #[derive(Debug, StructOpt)]
 pub enum Command {
     #[structopt(name = "build")]
@@ -40,21 +26,33 @@ use failure::err_msg;
 use failure::Error;
 use std::result;
 
+/// Parse cli commands
+pub fn run_cargo_ebuild(
+    cmd: Option<Command>,
+    verbosity: u8,
+    quiet: bool,
+) -> result::Result<Ebuild, Error> {
+    // If no command is specified run build with default conf
+    let cmd = cmd.unwrap_or(Command::Build {
+        unstable_flags: Vec::new(),
+    });
+
+    // Here will be the match of the commands, now just example
+    match cmd {
+        Command::Build { unstable_flags } => build(u32::from(verbosity), quiet, unstable_flags),
+    }
+}
+
 /// Quite huge all-in-one func that generates and Ebuild from some cli
 /// cli configuration
-pub fn run_cargo_ebuild(cli: Cli) -> result::Result<Ebuild, Error> {
-    // Here will be the match of the commands, now just example
-    let flags = match cli.cmd {
-        Command::Build { unstable_flags } => unstable_flags,
-    };
-
+fn build(verbosity: u32, quiet: bool, flags: Vec<String>) -> result::Result<Ebuild, Error> {
     // build the crate URIs
     let mut config = Config::default()?;
 
     // setup cargo configuration
     config.configure(
-        u32::from(cli.verbosity),
-        Some(cli.quiet),
+        u32::from(verbosity),
+        Some(quiet),
         &None, // color
         false, // frozen
         false, // locked
@@ -98,10 +96,13 @@ pub fn run_cargo_ebuild(cli: Cli) -> result::Result<Ebuild, Error> {
 
                 match GitSource::new(&src_id, &config) {
                     Ok(git_src) => {
-                        git_crates.push(format!("{} {}\n", git_src.url(),
-                        // not sure on how is the best way to encode this
-                        // a git_reference could be a tag, branch, or revision
-                        src_id.git_reference().unwrap().pretty_ref().unwrap()))
+                        git_crates.push(format!(
+                            "{} {}\n",
+                            git_src.url(),
+                            // not sure on how is the best way to encode this
+                            // a git_reference could be a tag, branch, or revision
+                            src_id.git_reference().unwrap().pretty_ref().unwrap()
+                        ))
                     }
                     Err(err) => error!(
                         "Not able to find git source for {} caused by {}",
