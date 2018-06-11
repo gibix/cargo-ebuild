@@ -20,7 +20,7 @@ repository = "cardoe/cargo-bitbake"
 cargo = "^0.27"
 time = "^0.1"
 structopt = "^0.2"
-quicli = "^0.2"
+quicli = "^0.3"
 log = "^0.4"
 human-panic = "^0.4"
 
